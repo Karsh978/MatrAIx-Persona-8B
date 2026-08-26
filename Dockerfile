@@ -22,26 +22,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
 
-# Create deep nested path structure to prevent pathlib parents[4] IndexError
+# Deep path layout setup to fix pathlib parents[4] and module resolution
+WORKDIR /root/project/MatrAIx-Persona-8B
+
+# Copy entire repository source context
+COPY . .
+
+# Copy compiled frontend static files
+COPY --from=frontend-builder /app/frontend/dist ./application/playground/backend/static
+
 WORKDIR /root/project/MatrAIx-Persona-8B/application/playground/backend
 
-# Copy backend source code to the deep path
-COPY application/playground/backend/ ./
-
-# Sync backend dependencies
+# Sync dependencies
 RUN uv sync || pip install -r requirements.txt || pip install .
 
-# Copy compiled frontend static files to backend static folder
-COPY --from=frontend-builder /app/frontend/dist ./static
-
-# Configure PYTHONPATH to include parent directories so 'from backend...' imports work
-# Include application, playground, and backend in PYTHONPATH for absolute module imports
-ENV PYTHONPATH=/root/project/MatrAIx-Persona-8B/application:/root/project/MatrAIx-Persona-8B/application/playground:/root/project/MatrAIx-Persona-8B/application/playground/backend
+# Set complete python environment paths for root & inner submodules
+ENV PYTHONPATH=/root/project/MatrAIx-Persona-8B:/root/project/MatrAIx-Persona-8B/application:/root/project/MatrAIx-Persona-8B/application/playground:/root/project/MatrAIx-Persona-8B/application/playground/backend
 ENV PORT=8000
 ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
 
-WORKDIR /root/project/MatrAIx-Persona-8B/application/playground/backend
-
-# Directly invoke api.app:app entrypoint
+# Run FastAPI via app.py
 CMD ["sh", "-c", "uv run uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
