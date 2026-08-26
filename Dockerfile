@@ -22,10 +22,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
 
-# Deep path layout setup
+# Deep path layout setup for pathlib parents[4] compatibility
 WORKDIR /root/project/MatrAIx-Persona-8B
 
-# Copy entire repository source context
+# Copy full repository source context
 COPY . .
 
 # Copy compiled frontend static files
@@ -33,14 +33,14 @@ COPY --from=frontend-builder /app/frontend/dist ./application/playground/backend
 
 WORKDIR /root/project/MatrAIx-Persona-8B/application/playground/backend
 
-# Sync dependencies and install current directory in editable mode
-RUN uv sync || pip install -r requirements.txt || pip install -e .
+# Sync dependencies globally into python environment
+RUN uv pip install --system -r requirements.txt || pip install -r requirements.txt || pip install .
 
-# Configure PYTHONPATH including application & playground roots explicitly
-ENV PYTHONPATH=/root/project/MatrAIx-Persona-8B/application/playground:/root/project/MatrAIx-Persona-8B/application:/root/project/MatrAIx-Persona-8B/application/playground/backend:/root/project/MatrAIx-Persona-8B
+# Environment path configuration
+ENV PYTHONPATH=/root/project/MatrAIx-Persona-8B:/root/project/MatrAIx-Persona-8B/application:/root/project/MatrAIx-Persona-8B/application/playground:/root/project/MatrAIx-Persona-8B/application/playground/backend
 ENV PORT=8000
 ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
 
-# Run FastAPI via api.app
-CMD ["sh", "-c", "uv run uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Direct uvicorn execution bypassing uv environment isolation
+CMD ["sh", "-c", "python -m uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
