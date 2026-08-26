@@ -35,10 +35,13 @@ RUN uv sync || pip install -r requirements.txt || pip install .
 COPY --from=frontend-builder /app/frontend/dist ./static
 
 # Configure PYTHONPATH to include parent directories so 'from backend...' imports work
-ENV PYTHONPATH=/root/project/MatrAIx-Persona-8B/application/playground:/root/project/MatrAIx-Persona-8B/application/playground/backend
+# Include application, playground, and backend in PYTHONPATH for absolute module imports
+ENV PYTHONPATH=/root/project/MatrAIx-Persona-8B/application:/root/project/MatrAIx-Persona-8B/application/playground:/root/project/MatrAIx-Persona-8B/application/playground/backend
 ENV PORT=8000
 ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
 
-# Launch uvicorn targeting api package entrypoint dynamically
-CMD ["sh", "-c", "if [ -f api/main.py ]; then uv run uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}; elif [ -f api/app.py ]; then uv run uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-8000}; elif [ -f api/server.py ]; then uv run uvicorn api.server:app --host 0.0.0.0 --port ${PORT:-8000}; else uv run uvicorn api:app --host 0.0.0.0 --port ${PORT:-8000}; fi"]
+WORKDIR /root/project/MatrAIx-Persona-8B/application/playground/backend
+
+# Directly invoke api.app:app entrypoint
+CMD ["sh", "-c", "uv run uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
