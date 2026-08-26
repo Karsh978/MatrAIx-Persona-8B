@@ -22,24 +22,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
 
-WORKDIR /app
+# Create deep nested path structure to prevent pathlib parents[4] IndexError
+WORKDIR /root/project/MatrAIx-Persona-8B/application/playground/backend
 
-# Copy backend source code
-COPY application/playground/backend/ ./backend/
+# Copy backend source code to the deep path
+COPY application/playground/backend/ ./
 
 # Sync backend dependencies
-RUN cd backend && (uv sync || pip install -r requirements.txt || pip install .)
+RUN uv sync || pip install -r requirements.txt || pip install .
 
-# Copy compiled frontend static files to backend
-COPY --from=frontend-builder /app/frontend/dist ./backend/static
+# Copy compiled frontend static files to backend static folder
+COPY --from=frontend-builder /app/frontend/dist ./static
 
-# Include both /app and /app/backend in PYTHONPATH to satisfy 'from backend.service' imports
-ENV PYTHONPATH=/app:/app/backend
+# Configure PYTHONPATH to include parent directories so 'from backend...' imports work
+ENV PYTHONPATH=/root/project/MatrAIx-Persona-8B/application/playground:/root/project/MatrAIx-Persona-8B/application/playground/backend
 ENV PORT=8000
 ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
-
-WORKDIR /app/backend
 
 # Launch uvicorn targeting api package entrypoint dynamically
 CMD ["sh", "-c", "if [ -f api/main.py ]; then uv run uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}; else uv run uvicorn api.index:app --host 0.0.0.0 --port ${PORT:-8000}; fi"]
