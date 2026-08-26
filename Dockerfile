@@ -41,4 +41,4 @@ ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
 
 # Launch uvicorn targeting api package entrypoint dynamically
-CMD ["sh", "-c", "if [ -f api/main.py ]; then uv run uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}; else uv run uvicorn api.index:app --host 0.0.0.0 --port ${PORT:-8000}; fi"]
+CMD ["sh", "-c", "if [ -f api/main.py ]; then uv run uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}; elif [ -f api/app.py ]; then uv run uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-8000}; elif [ -f api/server.py ]; then uv run uvicorn api.server:app --host 0.0.0.0 --port ${PORT:-8000}; else uv run uvicorn api:app --host 0.0.0.0 --port ${PORT:-8000}; fi"]
