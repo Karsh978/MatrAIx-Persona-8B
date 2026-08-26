@@ -37,5 +37,6 @@ ENV PORT=8000
 ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
 
+ENV PYTHONPATH=/app/backend
 WORKDIR /app/backend
-CMD ["sh", "-c", "uv run python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uv run python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
