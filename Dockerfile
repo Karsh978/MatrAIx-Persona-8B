@@ -18,18 +18,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
     build-essential \
-    && rm -rf /lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
 
 WORKDIR /app
 
-# Copy backend dependencies and install
-COPY application/playground/backend/pyproject.toml application/playground/backend/uv.lock ./backend/
-RUN cd backend && uv sync --frozen
-
-# Copy project source code
+# Copy backend pyproject.toml and source code directly
 COPY application/playground/backend/ ./backend/
+
+# Sync backend dependencies via uv
+RUN cd backend && (uv sync || pip install -r requirements.txt || pip install .)
+
 COPY --from=frontend-builder /app/frontend/dist ./backend/static
 
 # OpenRouter & Render runtime configs
