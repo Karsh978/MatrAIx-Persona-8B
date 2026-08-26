@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
 
-# Deep path layout setup for pathlib parents[4] compatibility
+# Set up deep path layout for pathlib parents[4] compatibility
 WORKDIR /root/project/MatrAIx-Persona-8B
 
 # Copy full repository source context
@@ -33,16 +33,17 @@ COPY --from=frontend-builder /app/frontend/dist ./application/playground/backend
 
 WORKDIR /root/project/MatrAIx-Persona-8B/application/playground/backend
 
-# Sync dependencies into system environment
+# Install dependencies globally
 RUN uv pip install --system -r requirements.txt || pip install -r requirements.txt || pip install .
 
-# Inject paths permanently into Python site-packages (.pth)
-RUN python -c "import site; p = site.getsitepackages()[0] + '/matraix_paths.pth'; open(p, 'w').write('/root/project/MatrAIx-Persona-8B\n/root/project/MatrAIx-Persona-8B/application\n/root/project/MatrAIx-Persona-8B/application/playground\n/root/project/MatrAIx-Persona-8B/application/playground/backend\n')"
+# Create permanent Symlinks in global site-packages to resolve both 'backend' and 'playground' globally
+RUN PYTHON_SITE=$(python -c "import site; print(site.getsitepackages()[0])") && \
+    ln -s /root/project/MatrAIx-Persona-8B/application/playground/backend $PYTHON_SITE/backend && \
+    ln -s /root/project/MatrAIx-Persona-8B/application/playground $PYTHON_SITE/playground
 
-ENV PYTHONPATH=/root/project/MatrAIx-Persona-8B/application/playground:/root/project/MatrAIx-Persona-8B/application:/root/project/MatrAIx-Persona-8B:/root/project/MatrAIx-Persona-8B/application/playground/backend
 ENV PORT=8000
 ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
 
-# Run uvicorn with explicit sys.path setup for both 'playground' and 'backend'
-CMD ["sh", "-c", "python -c \"import sys; sys.path.insert(0, '/root/project/MatrAIx-Persona-8B/application/playground'); sys.path.insert(0, '/root/project/MatrAIx-Persona-8B/application'); sys.path.insert(0, '/root/project/MatrAIx-Persona-8B/application/playground/backend'); import uvicorn; uvicorn.run('api.app:app', host='0.0.0.0', port=int('${PORT}'))\""]
+# Clean uvicorn command (no complex sys.path string manipulation needed)
+CMD ["sh", "-c", "python -m uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
