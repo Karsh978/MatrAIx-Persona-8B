@@ -36,7 +36,10 @@ ENV PORT=8000
 ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
 
-WORKDIR /app/backend
-# Set PYTHONPATH to current backend directory and invoke Python entrypoint dynamically
+# Set PYTHONPATH to backend root directory so 'api' package resolves properly
 ENV PYTHONPATH=/app/backend
-CMD ["sh", "-c", "if [ -f main.py ]; then uv run uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}; elif [ -f run.py ]; then uv run python run.py; else uv run uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}; fi"]
+
+WORKDIR /app/backend
+
+# Launch uvicorn targeting the app inside the api package
+CMD ["sh", "-c", "if [ -f api/main.py ]; then uv run uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}; else uv run uvicorn api.index:app --host 0.0.0.0 --port ${PORT:-8000}; fi"]
