@@ -33,14 +33,15 @@ COPY --from=frontend-builder /app/frontend/dist ./application/playground/backend
 
 WORKDIR /root/project/MatrAIx-Persona-8B/application/playground/backend
 
-# Sync dependencies globally into python environment
+# Sync dependencies into system environment
 RUN uv pip install --system -r requirements.txt || pip install -r requirements.txt || pip install .
 
-# Environment path configuration
-ENV PYTHONPATH=/root/project/MatrAIx-Persona-8B:/root/project/MatrAIx-Persona-8B/application:/root/project/MatrAIx-Persona-8B/application/playground:/root/project/MatrAIx-Persona-8B/application/playground/backend
+# Force Python site-packages to recognize module paths permanently
+RUN python -c "import site; p = site.getsitepackages()[0] + '/matraix_paths.pth'; open(p, 'w').write('/root/project/MatrAIx-Persona-8B\n/root/project/MatrAIx-Persona-8B/application\n/root/project/MatrAIx-Persona-8B/application/playground\n/root/project/MatrAIx-Persona-8B/application/playground/backend\n')"
+
 ENV PORT=8000
 ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
 
-# Direct uvicorn execution bypassing uv environment isolation
+# Direct uvicorn launch
 CMD ["sh", "-c", "python -m uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
