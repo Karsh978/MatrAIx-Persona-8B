@@ -36,13 +36,13 @@ WORKDIR /root/project/MatrAIx-Persona-8B/application/playground/backend
 # Sync dependencies into system environment
 RUN uv pip install --system -r requirements.txt || pip install -r requirements.txt || pip install .
 
-# Register system site-packages & path overrides
-RUN python -c "import site; p = site.getsitepackages()[0] + '/matraix_paths.pth'; open(p, 'w').write('/root/project/MatrAIx-Persona-8B\n/root/project/MatrAIx-Persona-8B/application\n/root/project/MatrAIx-Persona-8B/application/playground/backend\n')"
+# Inject paths permanently into Python site-packages (.pth)
+RUN python -c "import site; p = site.getsitepackages()[0] + '/matraix_paths.pth'; open(p, 'w').write('/root/project/MatrAIx-Persona-8B\n/root/project/MatrAIx-Persona-8B/application\n/root/project/MatrAIx-Persona-8B/application/playground\n/root/project/MatrAIx-Persona-8B/application/playground/backend\n')"
 
-ENV PYTHONPATH=/root/project/MatrAIx-Persona-8B/application:/root/project/MatrAIx-Persona-8B:/root/project/MatrAIx-Persona-8B/application/playground/backend
+ENV PYTHONPATH=/root/project/MatrAIx-Persona-8B/application/playground:/root/project/MatrAIx-Persona-8B/application:/root/project/MatrAIx-Persona-8B:/root/project/MatrAIx-Persona-8B/application/playground/backend
 ENV PORT=8000
 ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
 
-# Run uvicorn with inline sys.path injection to resolve 'playground.harbor' instantly
-CMD ["sh", "-c", "python -c \"import sys; sys.path.insert(0, '/root/project/MatrAIx-Persona-8B/application'); sys.path.insert(0, '/root/project/MatrAIx-Persona-8B/application/playground/backend'); import uvicorn; uvicorn.run('api.app:app', host='0.0.0.0', port=int('${PORT}'))\""]
+# Run uvicorn with explicit sys.path setup for both 'playground' and 'backend'
+CMD ["sh", "-c", "python -c \"import sys; sys.path.insert(0, '/root/project/MatrAIx-Persona-8B/application/playground'); sys.path.insert(0, '/root/project/MatrAIx-Persona-8B/application'); sys.path.insert(0, '/root/project/MatrAIx-Persona-8B/application/playground/backend'); import uvicorn; uvicorn.run('api.app:app', host='0.0.0.0', port=int('${PORT}'))\""]
