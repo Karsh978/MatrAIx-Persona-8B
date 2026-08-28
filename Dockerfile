@@ -30,14 +30,16 @@ COPY . .
 # Copy compiled frontend static files
 COPY --from=frontend-builder /app/frontend/dist ./application/playground/backend/static
 
-WORKDIR /root/project/MatrAIx-Persona-8B/application/playground/backend
+WORKDIR /root/project/MatrAIx-Persona-8B
 
-# Install dependencies globally
-RUN uv pip install --system -r requirements.txt || pip install -r requirements.txt || pip install .
+# Install dependencies and local repository in editable mode
+RUN uv pip install --system -r application/playground/backend/requirements.txt || pip install -r application/playground/backend/requirements.txt
+RUN pip install -e . --no-deps
+
+WORKDIR /root/project/MatrAIx-Persona-8B/application/playground/backend
 
 ENV PORT=8000
 ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
 
-# Run FastAPI natively
 CMD ["python", "-m", "uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000"]
