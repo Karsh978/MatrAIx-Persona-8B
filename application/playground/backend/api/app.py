@@ -38,6 +38,10 @@ needs just FastAPI + pydantic. Catalog loading uses stdlib ``json`` only.
 FastAPI application layer for Playground.
 """
 
+"""
+FastAPI application layer for Playground.
+"""
+
 from __future__ import annotations
 
 import sys
@@ -55,9 +59,8 @@ for _p in [str(_BACKEND), str(_PLAYGROUND), str(_APP), str(_ROOT)]:
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-# Importing backend.api wires the eval package dir onto sys.path so the lazy
-# `import recbot...` resolves later (and so `import backend...` works at all).
-import backend.api  # noqa: F401  (side effect: sys.path wiring)
+# Importing backend.api wires the eval package dir onto sys.path
+import backend.api  # noqa: F401
 from backend.api import schemas
 from backend.api.deps import AppState, build_state, state_from_request
 
@@ -68,7 +71,6 @@ DEV_ORIGINS: List[str] = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
-
 
 class _NoCacheIndexMiddleware(BaseHTTPMiddleware):
     """Prevent browsers from serving a stale SPA shell after frontend rebuilds."""
