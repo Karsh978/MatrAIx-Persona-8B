@@ -45,26 +45,28 @@ PLAYGROUND_DIR = CURRENT_FILE.parents[2] # application/playground
 APP_DIR = CURRENT_FILE.parents[3]        # application
 REPO_ROOT = CURRENT_FILE.parents[4]      # root repo
 
-# Prepend all possible roots to sys.path
-for path in [str(BACKEND_DIR), str(PLAYGROUND_DIR), str(APP_DIR), str(REPO_ROOT)]:
-    if path not in sys.path:
-        sys.path.insert(0, path)
+"""
+(Aapki module ki docstring agar wahan pehle se hai to rehne do)
+"""
 
 from __future__ import annotations
 
-import datetime as _dt
-import os
-import subprocess
-import urllib.request
-from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, Dict, List, Optional
+import sys
+from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request as StarletteRequest
-from starlette.responses import Response as StarletteResponse
+# Self-bootstrap paths before any sub-module imports in app.py
+_CURRENT = Path(__file__).resolve()
+_BACKEND = _CURRENT.parents[1]       # application/playground/backend
+_PLAYGROUND = _CURRENT.parents[2]    # application/playground
+_APP = _CURRENT.parents[3]           # application
+_ROOT = _CURRENT.parents[4]          # repository root
+
+for _p in [str(_BACKEND), str(_PLAYGROUND), str(_APP), str(_ROOT)]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+# <-- Iske BAAD hi baaki ke imports hone chahiye (e.g., import os, from fastapi import FastAPI, etc.)
+# DHYAN RAHE: Is path block ke niche duplicate 'from __future__ import annotations' bilkul mat rehne dena!
 
 # Importing backend.api wires the eval package dir onto sys.path so the lazy
 # `import recbot...` resolves later (and so `import backend...` works at all).
