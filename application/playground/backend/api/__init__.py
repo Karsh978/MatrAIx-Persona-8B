@@ -22,6 +22,20 @@ only when a turn actually executes, so the API (and its tests) run with just
 FastAPI + pydantic installed.
 """
 
+
+import sys
+from pathlib import Path
+
+# Self-bootstrap package paths before any module imports
+_CURRENT = Path(__file__).resolve()
+_BACKEND = _CURRENT.parents[1]       # application/playground/backend
+_PLAYGROUND = _CURRENT.parents[2]    # application/playground
+_APP = _CURRENT.parents[3]           # application
+_ROOT = _CURRENT.parents[4]          # repository root
+
+for _p in [str(_BACKEND), str(_PLAYGROUND), str(_APP), str(_ROOT)]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 from __future__ import annotations
 
 # Importing the service package wires
