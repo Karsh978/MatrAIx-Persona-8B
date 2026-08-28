@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
 
-# Deep path layout setup for pathlib parents[4] compatibility
+# Set up deep path layout for pathlib parents[4] compatibility
 WORKDIR /root/project/MatrAIx-Persona-8B
 
 # Copy full repository source context
@@ -36,16 +36,17 @@ WORKDIR /root/project/MatrAIx-Persona-8B/application/playground/backend
 # Install dependencies globally
 RUN uv pip install --system -r requirements.txt || pip install -r requirements.txt || pip install .
 
-# Create sitecustomize.py in site-packages to force sys.path order before any imports execute
+# Symlink both top-level modules directly into site-packages
+# 1. 'backend' -> maps to application/playground/backend (satisfies 'from backend.service...')
+# 2. 'playground' -> maps to application (satisfies 'from playground.harbor...')
 RUN PYTHON_SITE=$(python -c "import site; print(site.getsitepackages()[0])") && \
-    echo "import sys\n\
-sys.path.insert(0, '/root/project/MatrAIx-Persona-8B/application/playground/backend')\n\
-sys.path.insert(0, '/root/project/MatrAIx-Persona-8B/application')\n\
-" > $PYTHON_SITE/sitecustomize.py
+    rm -rf $PYTHON_SITE/backend $PYTHON_SITE/playground && \
+    ln -s /root/project/MatrAIx-Persona-8B/application/playground/backend $PYTHON_SITE/backend && \
+    ln -s /root/project/MatrAIx-Persona-8B/application $PYTHON_SITE/playground
 
 ENV PORT=8000
 ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
 
-# Run FastAPI via standard uvicorn
+# Run FastAPI via standard uvicorn entrypoint
 CMD ["sh", "-c", "python -m uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
