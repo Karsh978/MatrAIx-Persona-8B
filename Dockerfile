@@ -36,17 +36,14 @@ WORKDIR /root/project/MatrAIx-Persona-8B/application/playground/backend
 # Install dependencies globally
 RUN uv pip install --system -r requirements.txt || pip install -r requirements.txt || pip install .
 
-# CORRECT SYMLINKS:
-# 1. 'backend' points directly to backend directory -> Satisfies 'from backend.service'
-# 2. 'playground' points to application/playground directory -> Satisfies 'from playground.harbor'
-RUN PYTHON_SITE=$(python -c "import site; print(site.getsitepackages()[0])") && \
-    rm -rf $PYTHON_SITE/backend $PYTHON_SITE/playground && \
-    ln -s /root/project/MatrAIx-Persona-8B/application/playground/backend $PYTHON_SITE/backend && \
-    ln -s /root/project/MatrAIx-Persona-8B/application/playground $PYTHON_SITE/playground
+# Setup Python site-packages path mapping via .pth file
+# This resolves BOTH 'backend' and 'playground.harbor' globally without symlink ambiguity
+RUN python -c "import site; p = site.getsitepackages()[0] + '/matraix_persona.pth'; open(p, 'w').write('/root/project/MatrAIx-Persona-8B/application/playground/backend\n/root/project/MatrAIx-Persona-8B/application\n/root/project/MatrAIx-Persona-8B\n')"
 
+ENV PYTHONPATH=/root/project/MatrAIx-Persona-8B/application/playground/backend:/root/project/MatrAIx-Persona-8B/application:/root/project/MatrAIx-Persona-8B
 ENV PORT=8000
 ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
 
-# Run FastAPI app directly
+# Direct FastAPI launch
 CMD ["sh", "-c", "python -m uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
