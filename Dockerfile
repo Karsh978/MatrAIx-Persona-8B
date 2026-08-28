@@ -13,6 +13,8 @@ RUN npm run build
 # --- Stage 2: Final Production Runtime ---
 FROM python:3.12-slim
 
+WORKDIR /root/project/MatrAIx-Persona-8B
+
 # Install system dependencies & uv package manager
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
@@ -21,9 +23,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
-
-# Set up path layout
-WORKDIR /root/project/MatrAIx-Persona-8B
 
 # Copy full repository source context
 COPY . .
@@ -36,18 +35,9 @@ WORKDIR /root/project/MatrAIx-Persona-8B/application/playground/backend
 # Install dependencies globally
 RUN uv pip install --system -r requirements.txt || pip install -r requirements.txt || pip install .
 
-# Clean previous links/pth files and inject direct sitecustomize setup
-RUN PYTHON_SITE=$(python -c "import site; print(site.getsitepackages()[0])") && \
-    rm -rf $PYTHON_SITE/backend $PYTHON_SITE/playground $PYTHON_SITE/*.pth $PYTHON_SITE/sitecustomize.py && \
-    echo "import sys\n\
-for p in ['/root/project/MatrAIx-Persona-8B/application', '/root/project/MatrAIx-Persona-8B/application/playground/backend']:\n\
-    if p not in sys.path:\n\
-        sys.path.insert(0, p)\n\
-" > $PYTHON_SITE/sitecustomize.py
-
 ENV PORT=8000
 ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
 
-# Run FastAPI via python module execution from backend directory
+# Run FastAPI natively
 CMD ["python", "-m", "uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000"]
