@@ -34,6 +34,22 @@ service only when a turn actually runs, so importing the app (and the tests)
 needs just FastAPI + pydantic. Catalog loading uses stdlib ``json`` only.
 """
 
+import sys
+from pathlib import Path
+
+# Dynamically calculate project roots relative to this file
+# app.py is located at application/playground/backend/api/app.py
+CURRENT_FILE = Path(__file__).resolve()
+BACKEND_DIR = CURRENT_FILE.parents[1]  # application/playground/backend
+PLAYGROUND_DIR = CURRENT_FILE.parents[2] # application/playground
+APP_DIR = CURRENT_FILE.parents[3]        # application
+REPO_ROOT = CURRENT_FILE.parents[4]      # root repo
+
+# Prepend all possible roots to sys.path
+for path in [str(BACKEND_DIR), str(PLAYGROUND_DIR), str(APP_DIR), str(REPO_ROOT)]:
+    if path not in sys.path:
+        sys.path.insert(0, path)
+
 from __future__ import annotations
 
 import datetime as _dt
