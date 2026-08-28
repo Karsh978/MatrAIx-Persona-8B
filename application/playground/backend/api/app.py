@@ -34,27 +34,17 @@ service only when a turn actually runs, so importing the app (and the tests)
 needs just FastAPI + pydantic. Catalog loading uses stdlib ``json`` only.
 """
 
-import sys
-from pathlib import Path
-
-# Dynamically calculate project roots relative to this file
-# app.py is located at application/playground/backend/api/app.py
-CURRENT_FILE = Path(__file__).resolve()
-BACKEND_DIR = CURRENT_FILE.parents[1]  # application/playground/backend
-PLAYGROUND_DIR = CURRENT_FILE.parents[2] # application/playground
-APP_DIR = CURRENT_FILE.parents[3]        # application
-REPO_ROOT = CURRENT_FILE.parents[4]      # root repo
-
 """
-(Aapki module ki docstring agar wahan pehle se hai to rehne do)
+FastAPI application layer for Playground.
 """
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import List
 
-# Self-bootstrap paths before any sub-module imports in app.py
+# Self-bootstrap paths strictly BEFORE any other sub-module imports
 _CURRENT = Path(__file__).resolve()
 _BACKEND = _CURRENT.parents[1]       # application/playground/backend
 _PLAYGROUND = _CURRENT.parents[2]    # application/playground
@@ -64,9 +54,6 @@ _ROOT = _CURRENT.parents[4]          # repository root
 for _p in [str(_BACKEND), str(_PLAYGROUND), str(_APP), str(_ROOT)]:
     if _p not in sys.path:
         sys.path.insert(0, _p)
-
-# <-- Iske BAAD hi baaki ke imports hone chahiye (e.g., import os, from fastapi import FastAPI, etc.)
-# DHYAN RAHE: Is path block ke niche duplicate 'from __future__ import annotations' bilkul mat rehne dena!
 
 # Importing backend.api wires the eval package dir onto sys.path so the lazy
 # `import recbot...` resolves later (and so `import backend...` works at all).
