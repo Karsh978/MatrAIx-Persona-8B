@@ -41,12 +41,16 @@ FastAPI application layer for Playground.
 """
 FastAPI application layer for Playground.
 """
-
 from __future__ import annotations
 
+import datetime as _dt
 import sys
 from pathlib import Path
-from typing import List
+from typing import Any, List
+
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request as StarletteRequest
+from starlette.responses import Response as StarletteResponse
 
 # Self-bootstrap paths strictly BEFORE any other sub-module imports
 _CURRENT = Path(__file__).resolve()
@@ -89,12 +93,7 @@ def _utc_now() -> str:
 
 
 def _persona_blurb(persona: Any, max_chars: int = 160) -> str:
-    """A short single-line preview of a persona for the picker.
-
-    Prefers the persona's free-text ``context`` (curated datasets), falling back
-    to ``summary``. Collapses whitespace and truncates with an ellipsis so the
-    card stays compact.
-    """
+    """A short single-line preview of a persona for the picker."""
     text = (
         getattr(persona, "context", "") or getattr(persona, "summary", "") or ""
     ).strip()
