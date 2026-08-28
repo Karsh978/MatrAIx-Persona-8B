@@ -22,13 +22,12 @@ only when a turn actually executes, so the API (and its tests) run with just
 FastAPI + pydantic installed.
 """
 
-
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-# Self-bootstrap paths before any sub-module imports
+# Self-bootstrap paths BEFORE any sub-module imports execute
 _CURRENT = Path(__file__).resolve()
 _BACKEND = _CURRENT.parents[1]       # application/playground/backend
 _PLAYGROUND = _CURRENT.parents[2]    # application/playground
@@ -39,14 +38,9 @@ for _p in [str(_BACKEND), str(_PLAYGROUND), str(_APP), str(_ROOT)]:
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-# Baaki ke aapke existing imports (like 'from backend.service ...') iske baad aayenge
-from __future__ import annotations
-
 # Importing the service package wires
 # the task-owned chatbot API source onto ``sys.path`` (so ``import recbot...``
-# resolves) without importing recbot itself. Doing it here means
-# simply importing ``backend.api`` is enough to make the lazy backend import
-# work later.
+# resolves) without importing recbot itself.
 from backend.service import ensure_recbot_importable
 
 __all__ = ["ensure_recbot_importable"]
