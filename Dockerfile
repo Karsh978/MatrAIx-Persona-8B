@@ -36,16 +36,16 @@ WORKDIR /root/project/MatrAIx-Persona-8B/application/playground/backend
 # Install dependencies globally
 RUN uv pip install --system -r requirements.txt || pip install -r requirements.txt || pip install .
 
-# PERMANENT PATH FIX:
-# 1. /application -> contains 'playground' directory (fixes 'from playground.harbor')
-# 2. /application/playground -> contains 'backend' directory (fixes 'from backend.service')
-# 3. /application/playground/backend -> backend source root
-RUN python -c "import site; p = site.getsitepackages()[0] + '/matraix_persona.pth'; open(p, 'w').write('/root/project/MatrAIx-Persona-8B/application\n/root/project/MatrAIx-Persona-8B/application/playground\n/root/project/MatrAIx-Persona-8B/application/playground/backend\n/root/project/MatrAIx-Persona-8B\n')"
+# Create sitecustomize.py in site-packages to force sys.path order before any imports execute
+RUN PYTHON_SITE=$(python -c "import site; print(site.getsitepackages()[0])") && \
+    echo "import sys\n\
+sys.path.insert(0, '/root/project/MatrAIx-Persona-8B/application/playground/backend')\n\
+sys.path.insert(0, '/root/project/MatrAIx-Persona-8B/application')\n\
+" > $PYTHON_SITE/sitecustomize.py
 
-ENV PYTHONPATH=/root/project/MatrAIx-Persona-8B/application:/root/project/MatrAIx-Persona-8B/application/playground:/root/project/MatrAIx-Persona-8B/application/playground/backend:/root/project/MatrAIx-Persona-8B
 ENV PORT=8000
 ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
 
-# Launch via Python inline sys.path setup as a bulletproof double safety net
-CMD ["sh", "-c", "python -c \"import sys; sys.path.extend(['/root/project/MatrAIx-Persona-8B/application', '/root/project/MatrAIx-Persona-8B/application/playground', '/root/project/MatrAIx-Persona-8B/application/playground/backend']); import uvicorn; uvicorn.run('api.app:app', host='0.0.0.0', port=int('${PORT}'))\""]
+# Run FastAPI via standard uvicorn
+CMD ["sh", "-c", "python -m uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
