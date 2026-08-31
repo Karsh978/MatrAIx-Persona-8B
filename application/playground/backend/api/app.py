@@ -1,46 +1,9 @@
 """The Playground FastAPI application.
 
 This wires the pure-python service layer (:mod:`backend.service`) into a single
-HTTP app and implements every endpoint of the API contract. It is intentionally
-thin: handlers validate input via the pydantic models in
-:mod:`backend.api.schemas`, delegate to the shared service singletons created in
-:mod:`backend.api.deps`, and shape the JSON response.
-
-Design:
-
-* :func:`create_app` builds the process-wide :class:`~backend.api.deps.AppState`
-  (catalog, config, session store, session manager + its one async job
-  registry) and stores it on ``app.state.services`` so handlers reach it via
-  :func:`~backend.api.deps.state_from_request`.
-* Turns use the **async job** pattern: ``POST /api/sessions/{id}/turns`` returns
-  a ``jobId`` immediately; the blocking turn runs in the manager's threadpool
-  (serialized per session); the client polls ``GET /api/jobs/{jobId}`` for
-  ``building -> running -> done | error``.
-* CORS is opened for the Vite dev server (``http://localhost:5173`` /
-  ``127.0.0.1``) so the SPA can call the API cross-origin in development.
-* When a built SPA exists at ``web/dist`` it is mounted (HTML mode) at ``/`` so
-  one origin serves both the app and the API in production.
-
-Run it (single worker — the RecAI agent cache and the in-memory job registry
-assume one process)::
-
-    uvicorn backend.api.app:app --host 127.0.0.1 --port 8765 --workers 1
-
-(or ``bash application/playground/backend/run_dev.sh``).
-
-Importing this module is cheap: it does NOT import RecAI / numpy / pandas. The
-heavyweight ``recbot.interecagent_bridge.run_turn`` is lazy-imported inside the
-service only when a turn actually runs, so importing the app (and the tests)
-needs just FastAPI + pydantic. Catalog loading uses stdlib ``json`` only.
+HTTP app and implements every endpoint of the API contract.
 """
 
-"""
-FastAPI application layer for Playground.
-"""
-
-"""
-FastAPI application layer for Playground.
-"""
 from __future__ import annotations
 
 import datetime as _dt
