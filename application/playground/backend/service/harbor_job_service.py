@@ -5,57 +5,38 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Self-bootstrap package locations to ensure playground, matraix, and backend resolve
+# Self-bootstrap package locations
 _CURRENT = Path(__file__).resolve()
-_BACKEND = _CURRENT.parents[1]       # .../application/playground/backend
-_PLAYGROUND = _CURRENT.parents[2]    # .../application/playground
-_APP = _CURRENT.parents[3]           # .../application
-_ROOT = _CURRENT.parents[4]          # repository root
 
-for _p in [str(_BACKEND), str(_PLAYGROUND), str(_APP), str(_ROOT)]:
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
+# 1. Add application/playground so 'harbor' can be found if structure is playground/harbor
+_PLAYGROUND_DIR = _CURRENT.parents[2]  # /root/project/MatrAIx-Persona-8B/application/playground
+if str(_PLAYGROUND_DIR) not in sys.path:
+    sys.path.insert(0, str(_PLAYGROUND_DIR))
 
-import json
-import logging
-import os
-import re
-import shutil
-import threading
-import tomllib
-import uuid
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Callable
+# 2. Add application root so 'matraix' can be found
+_APP_DIR = _CURRENT.parents[3]        # /root/project/MatrAIx-Persona-8B/application
+if str(_APP_DIR) not in sys.path:
+    sys.path.insert(0, str(_APP_DIR))
 
-import yaml
+# 3. Add repo root
+_REPO_ROOT = _CURRENT.parents[4]      # /root/project/MatrAIx-Persona-8B
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
-from backend.service.application_types import normalize_metadata_type
-from backend.service.config import persona_model as default_persona_model
-from backend.service.job_aggregation import (
-    DEFAULT_REPORTING_LLM_MODEL,
-    REPORTING_LLM_ENABLE_ENV,
-    REPORTING_LLM_MODEL_ENV,
-    build_job_aggregation,
-    job_aggregation_artifact_is_fresh,
-    read_job_aggregation_artifact,
-    read_reporting_status_artifact,
-    reporting_status_artifact_path,
-    write_reporting_status_artifact,
-)
-from playground.harbor.playground import (
-    _default_harbor_command,
-    _repo_root,
-    _run_subprocess,
-)
-from playground.remote_runner.dispatch import filter_remote_harbor_payload_env
-from matraix.application_job import (
-    DEFAULT_APPLICATION_JOBS_DIR,
-    build_application_job_config,
-    resolve_job_environment,
-)
-from matraix.launch_env import build_launch_env
+# Fallback: create namespace mapping if harbor is directly at playground level
+try:
+    from playground.harbor.playground import (
+        _default_harbor_command,
+        _repo_root,
+        _run_subprocess,
+    )
+except ModuleNotFoundError:
+    # If 'harbor' is inside 'playground' directory without nested package structure
+    from harbor.playground import (
+        _default_harbor_command,
+        _repo_root,
+        _run_subprocess,
+    )
 
 DEFAULT_AGENT_BY_TYPE: dict[str, str] = {
     # Keys here stay canonical; ``normalize_metadata_type()`` handles legacy
