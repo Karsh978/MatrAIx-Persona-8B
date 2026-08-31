@@ -20,6 +20,12 @@ import yaml
 
 from backend.service.application_types import normalize_metadata_type
 from backend.service.config import persona_model as default_persona_model
+# Local stubbed module se direct import karo (no harbor.playground!)
+from backend.service.harbor_playground import (
+    _default_harbor_command,
+    _repo_root,
+    _run_subprocess,
+)
 from backend.service.job_aggregation import (
     DEFAULT_REPORTING_LLM_MODEL,
     REPORTING_LLM_ENABLE_ENV,
@@ -32,14 +38,6 @@ from backend.service.job_aggregation import (
     write_reporting_status_artifact,
 )
 
-# Clean, direct import from our local harbor_playground.py file
-from backend.service.harbor_playground import (
-    _default_harbor_command,
-    _repo_root,
-    _run_subprocess,
-)
-
-# Safe fallback for remote_runner
 try:
     from backend.service.remote_runner import filter_remote_harbor_payload_env
 except ModuleNotFoundError:
@@ -74,6 +72,8 @@ AUTO_TRIAL_PROFILE_BY_TYPE: dict[str, str] = {
 }
 
 logger = logging.getLogger(__name__)
+
+# <--- ISS LINE KE BAAD KA SAARA PURANA CODE WAISA HI REHNE DO --->
 
 
 def _should_use_local_distributed_harbor(
