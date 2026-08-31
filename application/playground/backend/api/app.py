@@ -16,7 +16,7 @@ _APP_ROOT = _FILE_PATH.parents[3]   # Points to /root/project/MatrAIx-Persona-8B
 for _p in [str(_REPO_ROOT), str(_APP_ROOT)]:
     if _p not in sys.path:
         sys.path.insert(0, _p)
-
+from fastapi import FastAPI
 import datetime as _dt
 from typing import Any, List
 
