@@ -5,17 +5,21 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Force-inject the 'application/playground' parent directory into sys.path
+# Self-bootstrap all required project roots into sys.path
 _CURRENT = Path(__file__).resolve()
-_PLAYGROUND_PARENT = _CURRENT.parents[2]  # Points to application/playground
-if str(_PLAYGROUND_PARENT) not in sys.path:
-    sys.path.insert(0, str(_PLAYGROUND_PARENT))
+_BACKEND = _CURRENT.parents[1]       # .../application/playground/backend
+_PLAYGROUND = _CURRENT.parents[2]    # .../application/playground
+_APP = _CURRENT.parents[3]           # .../application
+_ROOT = _CURRENT.parents[4]          # repository root
+
+for _p in [str(_APP), str(_ROOT), str(_PLAYGROUND), str(_BACKEND)]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 import json
 import logging
 import os
 import re
-# ... (rest of your standard imports)
 import shutil
 import threading
 import tomllib
@@ -23,7 +27,6 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Callable
 
 import yaml
@@ -41,12 +44,26 @@ from backend.service.job_aggregation import (
     reporting_status_artifact_path,
     write_reporting_status_artifact,
 )
-from playground.harbor.playground import (
-    _default_harbor_command,
-    _repo_root,
-    _run_subprocess,
-)
-from playground.remote_runner.dispatch import filter_remote_harbor_payload_env
+
+# Safe import with direct fallback if package nesting differs
+try:
+    from playground.harbor.playground import (
+        _default_harbor_command,
+        _repo_root,
+        _run_subprocess,
+    )
+except ModuleNotFoundError:
+    from harbor.playground import (
+        _default_harbor_command,
+        _repo_root,
+        _run_subprocess,
+    )
+
+try:
+    from playground.remote_runner.dispatch import filter_remote_harbor_payload_env
+except ModuleNotFoundError:
+    from remote_runner.dispatch import filter_remote_harbor_payload_env
+
 from matraix.application_job import (
     DEFAULT_APPLICATION_JOBS_DIR,
     build_application_job_config,
