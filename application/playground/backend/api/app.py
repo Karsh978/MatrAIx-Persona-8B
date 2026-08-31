@@ -7,14 +7,12 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Set ALL core paths globally before ANY service or package import happens
-_CURRENT = Path(__file__).resolve()
-_BACKEND = _CURRENT.parents[1]       # .../application/playground/backend
-_PLAYGROUND = _CURRENT.parents[2]    # .../application/playground
-_APP = _CURRENT.parents[3]           # .../application
-_ROOT = _CURRENT.parents[4]          # .../MatrAIx-Persona-8B
+# Repo root directory add karo taaki 'matraix' module access ho sake
+_FILE_PATH = Path(__file__).resolve()
+_REPO_ROOT = _FILE_PATH.parents[4]  # Points to /root/project/MatrAIx-Persona-8B
+_APP_ROOT = _FILE_PATH.parents[3]   # Points to /root/project/MatrAIx-Persona-8B/application
 
-for _p in [str(_APP), str(_PLAYGROUND), str(_BACKEND), str(_ROOT)]:
+for _p in [str(_REPO_ROOT), str(_APP_ROOT)]:
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
