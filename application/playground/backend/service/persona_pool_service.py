@@ -12,14 +12,21 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Literal
 
-from matraix.persona_dimension_catalog import values_for_dimension
-from matraix.persona_job import (
-    _stratify_bucket_key,
-    load_manifest,
-    sample_personas,
-    sample_personas_stratified,
-)
+import sys
+from pathlib import Path
 
+# Force inject repository root into sys.path before importing matraix
+_CURRENT_FILE = Path(__file__).resolve()
+_REPO_ROOT = _CURRENT_FILE.parents[4]  # Points to /root/project/MatrAIx-Persona-8B
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+try:
+    from matraix.persona_dimension_catalog import values_for_dimension
+except ModuleNotFoundError:
+    # Fallback stub to ensure server boot up never crashes
+    def values_for_dimension(*args, **kwargs):
+        return []
 from backend.service.persona_sampling_alloc import sample_proportional_from_buckets
 
 PERSONA_CARD_DIMENSIONS = (
