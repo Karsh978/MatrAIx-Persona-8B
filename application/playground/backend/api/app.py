@@ -1,23 +1,27 @@
 """
 FastAPI application layer for Playground.
 """
-
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 from contextlib import asynccontextmanager
+from typing import Any, Dict, List, Optional  # <--- Added Dict, Any
 
-# Repo root directory add karo taaki 'matraix' module access ho sake
+# Path resolution
 _FILE_PATH = Path(__file__).resolve()
-_REPO_ROOT = _FILE_PATH.parents[4]  # Points to /root/project/MatrAIx-Persona-8B
-_APP_ROOT = _FILE_PATH.parents[3]   # Points to /root/project/MatrAIx-Persona-8B/application
+_REPO_ROOT = _FILE_PATH.parents[4]
+_APP_ROOT = _FILE_PATH.parents[3]
 
 for _p in [str(_REPO_ROOT), str(_APP_ROOT)]:
     if _p not in sys.path:
         sys.path.insert(0, _p)
-from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
+
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, status  # <--- Added Depends
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request as StarletteRequest
+from starlette.responses import Response as StarletteResponse
 import datetime as _dt
 from typing import Any, List
 
