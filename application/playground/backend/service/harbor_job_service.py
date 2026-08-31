@@ -2,10 +2,20 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Force-inject the 'application/playground' parent directory into sys.path
+_CURRENT = Path(__file__).resolve()
+_PLAYGROUND_PARENT = _CURRENT.parents[2]  # Points to application/playground
+if str(_PLAYGROUND_PARENT) not in sys.path:
+    sys.path.insert(0, str(_PLAYGROUND_PARENT))
+
 import json
 import logging
 import os
 import re
+# ... (rest of your standard imports)
 import shutil
 import threading
 import tomllib
