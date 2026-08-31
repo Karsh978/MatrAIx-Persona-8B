@@ -1,32 +1,30 @@
-"""The Playground FastAPI application.
-
-This wires the pure-python service layer (:mod:`backend.service`) into a single
-HTTP app and implements every endpoint of the API contract.
+"""
+FastAPI application layer for Playground.
 """
 
 from __future__ import annotations
 
-import datetime as _dt
 import sys
 from pathlib import Path
+
+# Set ALL core paths globally before ANY service or package import happens
+_CURRENT = Path(__file__).resolve()
+_BACKEND = _CURRENT.parents[1]       # .../application/playground/backend
+_PLAYGROUND = _CURRENT.parents[2]    # .../application/playground
+_APP = _CURRENT.parents[3]           # .../application
+_ROOT = _CURRENT.parents[4]          # .../MatrAIx-Persona-8B
+
+for _p in [str(_APP), str(_PLAYGROUND), str(_BACKEND), str(_ROOT)]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+import datetime as _dt
 from typing import Any, List
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request as StarletteRequest
 from starlette.responses import Response as StarletteResponse
 
-# Self-bootstrap paths strictly BEFORE any other sub-module imports
-_CURRENT = Path(__file__).resolve()
-_BACKEND = _CURRENT.parents[1]       # application/playground/backend
-_PLAYGROUND = _CURRENT.parents[2]    # application/playground
-_APP = _CURRENT.parents[3]           # application
-_ROOT = _CURRENT.parents[4]          # repository root
-
-for _p in [str(_BACKEND), str(_PLAYGROUND), str(_APP), str(_ROOT)]:
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
-
-# Importing backend.api wires the eval package dir onto sys.path
 import backend.api  # noqa: F401
 from backend.api import schemas
 from backend.api.deps import AppState, build_state, state_from_request
