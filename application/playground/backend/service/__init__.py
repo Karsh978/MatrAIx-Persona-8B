@@ -2,7 +2,17 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
+
+# Self-bootstrap application path before any service dependencies execute
+_CURRENT = Path(__file__).resolve()
+_APP = _CURRENT.parents[2]       # application directory
+_ROOT = _CURRENT.parents[3]      # repository root
+
+for _p in [str(_APP), str(_ROOT)]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 __all__ = ["ensure_recbot_importable"]
 
