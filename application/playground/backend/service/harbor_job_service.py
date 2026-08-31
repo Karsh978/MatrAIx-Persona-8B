@@ -2,20 +2,6 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
-# Self-bootstrap all required project roots into sys.path
-_CURRENT = Path(__file__).resolve()
-_BACKEND = _CURRENT.parents[1]       # .../application/playground/backend
-_PLAYGROUND = _CURRENT.parents[2]    # .../application/playground
-_APP = _CURRENT.parents[3]           # .../application
-_ROOT = _CURRENT.parents[4]          # repository root
-
-for _p in [str(_APP), str(_ROOT), str(_PLAYGROUND), str(_BACKEND)]:
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
-
 import json
 import logging
 import os
@@ -27,12 +13,21 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable
 
 import yaml
 
 from backend.service.application_types import normalize_metadata_type
 from backend.service.config import persona_model as default_persona_model
+
+# Direct import from harbor_playground.py in the same directory!
+from backend.service.harbor_playground import (
+    _default_harbor_command,
+    _repo_root,
+    _run_subprocess,
+)
+
 from backend.service.job_aggregation import (
     DEFAULT_REPORTING_LLM_MODEL,
     REPORTING_LLM_ENABLE_ENV,
