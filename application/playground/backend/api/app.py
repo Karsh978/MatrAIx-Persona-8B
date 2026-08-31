@@ -17,6 +17,7 @@ for _p in [str(_REPO_ROOT), str(_APP_ROOT)]:
     if _p not in sys.path:
         sys.path.insert(0, _p)
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 import datetime as _dt
 from typing import Any, List
 
