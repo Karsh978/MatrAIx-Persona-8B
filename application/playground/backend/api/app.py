@@ -6,7 +6,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 from contextlib import asynccontextmanager
-from typing import Any, Dict, List, Optional  # <--- Added Dict, Any
+from typing import Any, Dict, List, Optional, Union
 
 # Path resolution
 _FILE_PATH = Path(__file__).resolve()
@@ -17,7 +17,18 @@ for _p in [str(_REPO_ROOT), str(_APP_ROOT)]:
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Response, status  # <--- Added Depends
+from fastapi import (
+    Body,
+    Depends,
+    FastAPI,
+    Header,
+    HTTPException,
+    Path,
+    Query,  # <--- Added Query
+    Request,
+    Response,
+    status,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request as StarletteRequest
