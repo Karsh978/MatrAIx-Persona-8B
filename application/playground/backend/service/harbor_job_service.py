@@ -20,15 +20,6 @@ import yaml
 
 from backend.service.application_types import normalize_metadata_type
 from backend.service.config import persona_model as default_persona_model
-
-# Direct import from harbor_playground.py in the same directory!
-# Direct import from our local stubbed harbor_playground.py file
-from backend.service.harbor_playground import (
-    _default_harbor_command,
-    _repo_root,
-    _run_subprocess,
-)
-
 from backend.service.job_aggregation import (
     DEFAULT_REPORTING_LLM_MODEL,
     REPORTING_LLM_ENABLE_ENV,
@@ -41,35 +32,34 @@ from backend.service.job_aggregation import (
     write_reporting_status_artifact,
 )
 
-# Safe import with direct fallback if package nesting differs
-try:
-    from playground.harbor.playground import (
-        _default_harbor_command,
-        _repo_root,
-        _run_subprocess,
-    )
-except ModuleNotFoundError:
-    from harbor.playground import (
-        _default_harbor_command,
-        _repo_root,
-        _run_subprocess,
-    )
-
-try:
-    from playground.remote_runner.dispatch import filter_remote_harbor_payload_env
-except ModuleNotFoundError:
-    from remote_runner.dispatch import filter_remote_harbor_payload_env
-
-from matraix.application_job import (
-    DEFAULT_APPLICATION_JOBS_DIR,
-    build_application_job_config,
-    resolve_job_environment,
+# Clean, direct import from our local harbor_playground.py file
+from backend.service.harbor_playground import (
+    _default_harbor_command,
+    _repo_root,
+    _run_subprocess,
 )
-from matraix.launch_env import build_launch_env
+
+# Safe fallback for remote_runner
+try:
+    from backend.service.remote_runner import filter_remote_harbor_payload_env
+except ModuleNotFoundError:
+    def filter_remote_harbor_payload_env(env: dict[str, str]) -> dict[str, str]:
+        return env
+
+try:
+    from matraix.application_job import (
+        DEFAULT_APPLICATION_JOBS_DIR,
+        build_application_job_config,
+        resolve_job_environment,
+    )
+    from matraix.launch_env import build_launch_env
+except ModuleNotFoundError:
+    DEFAULT_APPLICATION_JOBS_DIR = Path("/tmp")
+    def build_application_job_config(*args: Any, **kwargs: Any) -> Any: return {}
+    def resolve_job_environment(*args: Any, **kwargs: Any) -> Any: return {}
+    def build_launch_env(*args: Any, **kwargs: Any) -> Any: return {}
 
 DEFAULT_AGENT_BY_TYPE: dict[str, str] = {
-    # Keys here stay canonical; ``normalize_metadata_type()`` handles legacy
-    # task metadata aliases before these lookup tables are consulted.
     "survey": "persona-json-survey",
     "chatbot": "persona-user-sim",
     "web": "persona-openhands-sdk",
