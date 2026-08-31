@@ -22,6 +22,7 @@ from backend.service.application_types import normalize_metadata_type
 from backend.service.config import persona_model as default_persona_model
 
 # Direct import from harbor_playground.py in the same directory!
+# Direct import from our local stubbed harbor_playground.py file
 from backend.service.harbor_playground import (
     _default_harbor_command,
     _repo_root,
