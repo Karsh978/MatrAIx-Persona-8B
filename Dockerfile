@@ -40,3 +40,14 @@ ENV OPENAI_BASE_URL=https://openrouter.ai/api/v1
 EXPOSE ${PORT}
 
 CMD ["python", "-m", "uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# ... (Baqi Dockerfile same rehne do)
+
+WORKDIR /root/project/MatrAIx-Persona-8B/application/playground/backend
+
+# Ye 1 line saare module path issues permanently khatam kar degi:
+ENV PYTHONPATH="/root/project/MatrAIx-Persona-8B:/root/project/MatrAIx-Persona-8B/application:/root/project/MatrAIx-Persona-8B/application/playground:${PYTHONPATH}"
+
+ENV PORT=8000
+EXPOSE ${PORT}
+
+CMD ["python", "-m", "uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000"]
