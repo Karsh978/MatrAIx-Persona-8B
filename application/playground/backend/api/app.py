@@ -1423,6 +1423,7 @@ def create_app(catalog_path: Optional[str] = None) -> FastAPI:
         return {"tasks": [task.to_summary_dict() for task in list_web_eval_tasks()]}
 
     # ----------------------------- OS app eval ---------------------------- #
+  # ----------------------------- OS app eval ---------------------------- #
     @app.get(
         "/api/os-app-eval/tasks",
         response_model=schemas.OsAppEvalTasksResponse,
@@ -1441,6 +1442,37 @@ def create_app(catalog_path: Optional[str] = None) -> FastAPI:
             "service": "MatrAIx-Persona-8B Backend",
             "version": "1.0.0"
         }
+
+    return app
+
+
+# ==============================================================================
+# File ke end me (create_app() function call ke AAGE/BAHAR):
+# ==============================================================================
+
+from fastapi.openapi.utils import get_openapi
+
+app = create_app()
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    try:
+        openapi_schema = get_openapi(
+            title="MatrAIx-Persona-8B API",
+            version="1.0.0",
+            routes=app.routes,
+        )
+        app.openapi_schema = openapi_schema
+        return app.openapi_schema
+    except Exception as e:
+        return {
+            "openapi": "3.0.2",
+            "info": {"title": "MatrAIx-Persona-8B API", "version": "1.0.0"},
+            "paths": {}
+        }
+
+app.openapi = custom_openapi
 
     # --- static SPA (production single-origin) ------------------------- #
     # Mount LAST so it does not shadow the /api routes. Only when a build
