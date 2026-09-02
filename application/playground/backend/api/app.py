@@ -1447,7 +1447,7 @@ def create_app(catalog_path: Optional[str] = None) -> FastAPI:
 
 
 # ==============================================================================
-# File ke end me (create_app() function call ke AAGE/BAHAR):
+# Global App Execution (Zero Indentation Below This Line)
 # ==============================================================================
 
 from fastapi.openapi.utils import get_openapi
@@ -1474,10 +1474,8 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 
-    # --- static SPA (production single-origin) ------------------------- #
-    # Mount LAST so it does not shadow the /api routes. Only when a build
-    # exists; in dev the Vite server serves the SPA and proxies /api here.
-    dist = _web_dist_dir()
+# Ensure static web dist call is also strictly at top-level
+dist = _web_dist_dir()
     if os.path.isdir(dist):
         # Imported lazily so a missing build dir never costs an import.
         from fastapi.staticfiles import StaticFiles
