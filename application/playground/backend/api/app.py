@@ -2,18 +2,28 @@
 FastAPI application layer for Playground.
 """
 from __future__ import annotations
-# Replace the line: from backend.api.deps import AppState, get_services
-# With this safe block:
 
+
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union  # <--- Ensure Any is imported here
+
+# Path resolution
+_FILE_PATH = Path(__file__).resolve()
+_REPO_ROOT = _FILE_PATH.parents[4]
+_APP_ROOT = _FILE_PATH.parents[3]
+
+for _p in [str(_REPO_ROOT), str(_APP_ROOT)]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+# Safe deps import fallback
 try:
     from backend.api.deps import AppState, get_services
 except ImportError:
     from backend.api import deps
     
-    # Alias AppState if present, else fallback to Any
     AppState = getattr(deps, "AppState", Any)
     
-    # Locate the actual getter function or fallback to a stub
     if hasattr(deps, "get_services"):
         get_services = deps.get_services
     elif hasattr(deps, "get_state"):
@@ -21,7 +31,6 @@ except ImportError:
     elif hasattr(deps, "get_app_state"):
         get_services = deps.get_app_state
     else:
-        # Stub dependency function so FastAPI doesn't crash on route setup
         def get_services():
             return None
 from backend.api import schemas
