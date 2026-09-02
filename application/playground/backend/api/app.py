@@ -3,9 +3,14 @@ FastAPI application layer for Playground.
 """
 from __future__ import annotations
 
-
+import json
+import os
+import re
+import sys
+import time
+from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union  # <--- Ensure Any is imported here
+from typing import Any, Dict, List, Optional, Union
 
 # Path resolution
 _FILE_PATH = Path(__file__).resolve()
@@ -33,25 +38,8 @@ except ImportError:
     else:
         def get_services():
             return None
+
 from backend.api import schemas
-
-import json
-import os  # <--- Added os
-import re
-import sys
-import time
-from contextlib import asynccontextmanagerxfF
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-
-# Path resolutionf
-_FILE_PATH = Path(__file__).resolve()
-_REPO_ROOT = _FILE_PATH.parents[4]
-_APP_ROOT = _FILE_PATH.parents[3]
-
-for _p in [str(_REPO_ROOT), str(_APP_ROOT)]:
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
 
 from fastapi import (
     Body,
