@@ -1445,12 +1445,12 @@ def create_app(catalog_path: Optional[str] = None) -> FastAPI:
 
     return app
 
-
 # ==============================================================================
-# Global App Execution (Zero Indentation Below This Line)
+# Global App Instance & Static Mounts (FLUSH TO LEFT MARGIN - ZERO SPACES)
 # ==============================================================================
 
 from fastapi.openapi.utils import get_openapi
+from fastapi.staticfiles import StaticFiles
 
 app = create_app()
 
@@ -1474,13 +1474,10 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 
-# Ensure static web dist call is also strictly at top-level
+# Ensure dist check and static mounting have NO leading spaces
 dist = _web_dist_dir()
-    if os.path.isdir(dist):
-        # Imported lazily so a missing build dir never costs an import.
-        from fastapi.staticfiles import StaticFiles
-
-        app.mount("/", StaticFiles(directory=dist, html=True), name="spa")
+if os.path.isdir(dist):
+    app.mount("/static", StaticFiles(directory=dist), name="static")
 
     return app
 
