@@ -6,11 +6,13 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
 import sys
 import time
+import urllib.request
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, AsyncIterator, Dict, List, Optional, Union
 
 # Path resolution
 _FILE_PATH = Path(__file__).resolve()
@@ -54,18 +56,13 @@ from fastapi import (
     status,
 )
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request as StarletteRequest
 from starlette.responses import Response as StarletteResponse
 import datetime as _dt
-from typing import Any, List
-
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request as StarletteRequest
-from starlette.responses import Response as StarletteResponse
 
 import backend.api  # noqa: F401
-from backend.api import schemas
 from backend.api.deps import AppState, build_state, state_from_request
 
 __all__ = ["create_app", "app", "preflight_checks", "catalog_item_view"]
@@ -394,49 +391,53 @@ def preflight_checks() -> List[Dict[str, Any]]:
     )
 
     # ---- Chatbot — shipped chat task sidecars (all optional) ----------- #
-    from backend.service.chatbot_sidecar_service import sidecar_status
+    try:
+        from backend.service.chatbot_sidecar_service import sidecar_status
 
-    for application_id, name, task_slug in (
-        (
-            "finance_openbb",
-            "OpenBB (finance)",
-            "chat_openbb-corporate-action-honesty",
-        ),
-        (
-            "meal_planning_nutrition",
-            "Meal planning",
-            "chat_meal-planning-nutrition",
-        ),
-        (
-            "acme_support_api",
-            "Acme support API",
-            "example-chat-api_support_chatbot",
-        ),
-        (
-            "acme_support_mcp",
-            "Acme MCP support",
-            "example-chat-mcp_support_chatbot",
-        ),
-    ):
-        status = sidecar_status(application_id)
-        ok = bool(status.get("ok"))
-        health_url = str(status.get("healthUrl") or "")
-        checks.append(
-            {
-                "group": "Chatbot",
-                "name": name,
-                "ok": ok,
-                "optional": True,
-                "applicationId": application_id,
-                "detail": (
-                    "{} ready at {}.".format(name, health_url)
-                    if ok
-                    else "{} not ready at {}. Start it to run {}.".format(
-                        name, health_url, task_slug
-                    )
-                ),
-            }
-        )
+        for application_id, name, task_slug in (
+            (
+                "finance_openbb",
+                "OpenBB (finance)",
+                "chat_openbb-corporate-action-honesty",
+            ),
+            (
+                "meal_planning_nutrition",
+                "Meal planning",
+                "chat_meal-planning-nutrition",
+            ),
+            (
+                "acme_support_api",
+                "Acme support API",
+                "example-chat-api_support_chatbot",
+            ),
+            (
+                "acme_support_mcp",
+                "Acme MCP support",
+                "example-chat-mcp_support_chatbot",
+            ),
+        ):
+            status = sidecar_status(application_id)
+            ok = bool(status.get("ok"))
+            health_url = str(status.get("healthUrl") or "")
+            checks.append(
+                {
+                    "group": "Chatbot",
+                    "name": name,
+                    "ok": ok,
+                    "optional": True,
+                    "applicationId": application_id,
+                    "detail": (
+                        "{} ready at {}.".format(name, health_url)
+                        if ok
+                        else "{} not ready at {}. Start it to run {}.".format(
+                            name, health_url, task_slug
+                        )
+                    ),
+                }
+            )
+    except ImportError:
+        # Skip chatbot checks if service not available
+        pass
 
     # ---- Survey + Web surfaces ----------------------------------------- #
     checks.append(
@@ -584,9 +585,11 @@ def create_app(catalog_path: Optional[str] = None) -> FastAPI:
         tags=["health"],
     )
     def chatbot_sidecars() -> Dict[str, Any]:
-        from backend.service.chatbot_sidecar_service import list_sidecar_statuses
-
-        return {"sidecars": list_sidecar_statuses()}
+        try:
+            from backend.service.chatbot_sidecar_service import list_sidecar_statuses
+            return {"sidecars": list_sidecar_statuses()}
+        except ImportError:
+            return {"sidecars": []}
 
     @app.post(
         "/api/chatbot-sidecars/{application_id}/start",
@@ -594,7 +597,10 @@ def create_app(catalog_path: Optional[str] = None) -> FastAPI:
         tags=["health"],
     )
     def start_chatbot_sidecar(application_id: str) -> Dict[str, Any]:
-        from backend.service.chatbot_sidecar_service import start_sidecar
+        try:
+            from backend.service.chatbot_sidecar_service import start_sidecar
+        except ImportError:
+            raise HTTPException(status_code=500, detail="Chatbot service not available")
 
         if application_id not in schemas.SUPPORTED_APPLICATION_IDS:
             raise HTTPException(status_code=404, detail="unknown chatbot application")
@@ -1400,7 +1406,7 @@ def create_app(catalog_path: Optional[str] = None) -> FastAPI:
 
         return {"tasks": [task.to_summary_dict() for task in list_survey_harbor_tasks()]}
 
-# ----------------------------- Chatbot eval --------------------------- #
+    # ----------------------------- Chatbot eval --------------------------- #
     @app.get(
         "/api/chatbot-eval/tasks",
         response_model=schemas.ChatbotEvalTasksResponse,
@@ -1423,7 +1429,6 @@ def create_app(catalog_path: Optional[str] = None) -> FastAPI:
         return {"tasks": [task.to_summary_dict() for task in list_web_eval_tasks()]}
 
     # ----------------------------- OS app eval ---------------------------- #
-  # ----------------------------- OS app eval ---------------------------- #
     @app.get(
         "/api/os-app-eval/tasks",
         response_model=schemas.OsAppEvalTasksResponse,
@@ -1443,41 +1448,32 @@ def create_app(catalog_path: Optional[str] = None) -> FastAPI:
             "version": "1.0.0"
         }
 
-    return app
+    # ---------------------------- OpenAPI ---------------------------- #
+    def custom_openapi():
+        if app.openapi_schema:
+            return app.openapi_schema
+        try:
+            from fastapi.openapi.utils import get_openapi
+            openapi_schema = get_openapi(
+                title="MatrAIx-Persona-8B API",
+                version="1.0.0",
+                routes=app.routes,
+            )
+            app.openapi_schema = openapi_schema
+            return app.openapi_schema
+        except Exception as e:
+            return {
+                "openapi": "3.0.2",
+                "info": {"title": "MatrAIx-Persona-8B API", "version": "1.0.0"},
+                "paths": {}
+            }
 
-# ==============================================================================
-# Global App Instance & Static Mounts (FLUSH TO LEFT MARGIN - ZERO SPACES)
-# ==============================================================================
+    app.openapi = custom_openapi
 
-from fastapi.openapi.utils import get_openapi
-from fastapi.staticfiles import StaticFiles
-
-app = create_app()
-
-def custom_openapi():
-    if app.openapi_schema:
-        return app.openapi_schema
-    try:
-        openapi_schema = get_openapi(
-            title="MatrAIx-Persona-8B API",
-            version="1.0.0",
-            routes=app.routes,
-        )
-        app.openapi_schema = openapi_schema
-        return app.openapi_schema
-    except Exception as e:
-        return {
-            "openapi": "3.0.2",
-            "info": {"title": "MatrAIx-Persona-8B API", "version": "1.0.0"},
-            "paths": {}
-        }
-
-app.openapi = custom_openapi
-
-# Ensure dist check and static mounting have NO leading spaces
-dist = _web_dist_dir()
-if os.path.isdir(dist):
-    app.mount("/static", StaticFiles(directory=dist), name="static")
+    # ---------------------------- Static Mounts ---------------------------- #
+    dist = _web_dist_dir()
+    if os.path.isdir(dist):
+        app.mount("/static", StaticFiles(directory=dist), name="static")
 
     return app
 
