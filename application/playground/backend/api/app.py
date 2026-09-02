@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-# Path resolution
+# Path resolutionf
 _FILE_PATH = Path(__file__).resolve()
 _REPO_ROOT = _FILE_PATH.parents[4]
 _APP_ROOT = _FILE_PATH.parents[3]
@@ -1380,7 +1380,7 @@ def create_app(catalog_path: Optional[str] = None) -> FastAPI:
 
         return {"tasks": [task.to_summary_dict() for task in list_survey_harbor_tasks()]}
 
-    # ----------------------------- Chatbot eval --------------------------- #
+# ----------------------------- Chatbot eval --------------------------- #
     @app.get(
         "/api/chatbot-eval/tasks",
         response_model=schemas.ChatbotEvalTasksResponse,
@@ -1408,18 +1408,19 @@ def create_app(catalog_path: Optional[str] = None) -> FastAPI:
         response_model=schemas.OsAppEvalTasksResponse,
         tags=["os-app-eval"],
     )
-
-    @app.get("/")
-def health_check():
-    return {
-        "status": "healthy",
-        "service": "MatrAIx-Persona-8B Backend",
-        "version": "1.0.0"
-    }
     def os_app_eval_tasks(services: AppState = Depends(get_services)) -> Dict[str, Any]:
         from backend.service.os_app_tasks import list_os_app_eval_tasks
 
         return {"tasks": [task.to_summary_dict() for task in list_os_app_eval_tasks()]}
+
+    # ---------------------------- Health Check ---------------------------- #
+    @app.get("/", tags=["health"])
+    def health_check():
+        return {
+            "status": "healthy",
+            "service": "MatrAIx-Persona-8B Backend",
+            "version": "1.0.0"
+        }
 
     # --- static SPA (production single-origin) ------------------------- #
     # Mount LAST so it does not shadow the /api routes. Only when a build
