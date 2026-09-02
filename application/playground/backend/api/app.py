@@ -1408,6 +1408,14 @@ def create_app(catalog_path: Optional[str] = None) -> FastAPI:
         response_model=schemas.OsAppEvalTasksResponse,
         tags=["os-app-eval"],
     )
+
+    @app.get("/")
+def health_check():
+    return {
+        "status": "healthy",
+        "service": "MatrAIx-Persona-8B Backend",
+        "version": "1.0.0"
+    }
     def os_app_eval_tasks(services: AppState = Depends(get_services)) -> Dict[str, Any]:
         from backend.service.os_app_tasks import list_os_app_eval_tasks
 
